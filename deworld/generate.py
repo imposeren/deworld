@@ -99,4 +99,5 @@ world.add_power_point(power_points.CircleAreaPoint(layer_type=LAYER_TYPE.VEGETAT
 for i in xrange(300):
     print 'do step %d' % i
     world.do_step()
-    draw_world(i, world, catalog='./results')
+    if __name__ == '__main__':
+        draw_world(i, world, catalog='./results')
