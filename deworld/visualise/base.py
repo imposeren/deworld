@@ -47,19 +47,20 @@ class PlotCanvas(FigureCanvas):
         super(PlotCanvas, self).__init__(self.figure)
         self.setParent(parent)
 
-        # plot random 3D data
+        self.details = (0, )
+        #self.details = (-0.5, 0.5)
+
         self.axes = self.figure.add_subplot(111, projection='3d')
         self.rerender()
-        self.axes.autoscale(False)
 
     def rerender(self):
         self.axes.clear()
         self.axes.set_zlim(-1, 1)
-        self.axes.plot_trisurf(*self.get_data(), cmap=red_cyan_transp, linewidth=0.1)
         x = [random.random()*25 for i in range(25)]
         y = [random.random()*25 for i in range(25)]
         z = [random.random() for i in range(25)]
         self.axes.scatter(x, y, z)
+        self.axes.plot_trisurf(*self.get_data(), cmap=red_cyan_transp, linewidth=0.1)
         self.draw()
 
     def get_data(self):
@@ -69,7 +70,7 @@ class PlotCanvas(FigureCanvas):
         z_data = []
         for y, row in enumerate(layer.data):
             for x, value in enumerate(row):
-                for delta in (-0.5, 0, 0.5):
+                for delta in self.details:
                     x_data.append(x+delta)
                     y_data.append(y+delta)
                     z_data.append(value)
