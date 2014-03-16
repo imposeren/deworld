@@ -6,8 +6,17 @@ import random
 import math
 import pdb
 
-# thirdparty:
+# PySide:
 from PySide import QtGui, QtCore
+
+# matplotlib
+import matplotlib
+from matplotlib import cm
+from matplotlib.figure import Figure
+matplotlib.rcParams['backend.qt4'] = "PySide"
+
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from mpl_toolkits.mplot3d import Axes3D
 
 # deworld:
 from deworld.world import World
@@ -28,6 +37,53 @@ class Communicate(QtCore.QObject):
         super(Communicate, self).__init__()
         self.state = {}
         self.state['adding_power_point'] = False
+
+
+class PlotCanvas(FigureCanvas):
+    def __init__(self, parent=None):
+
+        self.figure = Figure(facecolor=(0, 0, 0))
+        super(PlotCanvas, self).__init__(self.figure)
+        self.setParent(parent)
+
+        # plot random 3D data
+        self.axes = self.figure.add_subplot(111, projection='3d')
+        self.axes.set_zlim(-1, 1)
+        self.rerender()
+        self.axes.autoscale(False)
+
+    def rerender(self):
+        self.axes.plot_trisurf(*self.get_data(), cmap=cm.jet)
+        self.draw()
+
+    def get_data(self):
+        layer = self.world.layer_height
+        x_data = []
+        y_data = []
+        z_data = []
+        for y, row in enumerate(layer.data):
+            for x, value in enumerate(row):
+                for delta in (-0.5, 0, 0.5):
+                    x_data.append(x+delta)
+                    y_data.append(y+delta)
+                    z_data.append(value)
+        return y_data, x_data, z_data
+
+    @property
+    def world(self):
+        return self.parent().visualiser.world
+
+
+class PlotWidget(QtGui.QWidget):
+    def __init__(self, visualiser):
+        super(PlotWidget, self).__init__()
+        self.visualiser = visualiser
+
+        self.setMinimumSize(QtCore.QSize(650, 500))
+        self.plot_canvas = PlotCanvas(parent=self)
+
+    def rerender(self):
+        self.plot_canvas.rerender()
 
 
 class MapDrawer(QtGui.QWidget):
@@ -150,6 +206,7 @@ class Visualiser(QtGui.QWidget):
     def initUI(self):
         self.comm = Communicate()
         self.map_widget = MapDrawer(self)
+        self.plot_widget = PlotWidget(self)
         self.step_button = QtGui.QPushButton(u'Do step')
         self.add_power_button = QtGui.QPushButton(u'Add power point')
         self.pdb_button = QtGui.QPushButton(u'PDB')
@@ -157,6 +214,7 @@ class Visualiser(QtGui.QWidget):
         grid = QtGui.QGridLayout()
 
         grid.addWidget(self.map_widget, 1, 0, 3, 1)
+        grid.addWidget(self.plot_widget, 4, 0)
         grid.addWidget(self.step_button, 1, 1)
         grid.addWidget(self.add_power_button, 2, 1)
         grid.addWidget(self.pdb_button, 3, 1)
@@ -180,9 +238,10 @@ class Visualiser(QtGui.QWidget):
 
     # reactions to signals:
     def do_step(self):
-        for i in range(5):
+        for i in range(2):
             self.world.do_step()
         self.map_widget.repaint()
+        self.plot_widget.rerender()
 
     def disable_enable_buttons(self, value):
         for button in self.buttons:
