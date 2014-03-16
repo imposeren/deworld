@@ -204,9 +204,11 @@ class Visualiser(QtGui.QWidget):
         self.subscribe_signals()
 
     def randomize_world(self):
+        from deworld.visualise.random_texture import get_value
         for x in range(self.world.w):
             for y in range(self.world.h):
-                self.world.layer_height.data[y][x] = random.random()
+                value = get_value(x, y) * 1.0 / 256
+                self.world.layer_height.data[y][x] = value
 
     def initUI(self):
         self.comm = Communicate()
