@@ -17,6 +17,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # deworld:
 from deworld.layers import LAYER_TYPE
+from deworld.cartographer import temperature_colorizer
 
 
 class Communicate(QtCore.QObject):
@@ -49,11 +50,13 @@ class PlotCanvas(FigureCanvas):
         self.axes.set_zlim(-1, 1.5)
 
         # height:
-        self.axes.plot_trisurf(*self.get_data('layer_height'), cmap=self.visualiser.cmap['height'], linewidth=0.1)
+        height_data = self.get_data('layer_height')
+        self.axes.plot_trisurf(*height_data, cmap=self.visualiser.cmap['height'], linewidth=0.1)
 
         # temperature:
         temp_data = self.get_data('layer_temperature')
-        self.axes.bar3d(temp_data[0], temp_data[1], [1.3 for i in temp_data[0]], 0.2, 0.2, temp_data[2], linewidth=0.1)
+        temp_colors = [temperature_colorizer(t).norm_rgb for t in temp_data[2]]
+        self.axes.bar3d(temp_data[0], temp_data[1], height_data[2], 0.1, 0.1, temp_data[2], color=temp_colors, linewidth=0.05)
         self.draw()
 
     def get_data(self, layer_name):

@@ -13,6 +13,9 @@ class Color(collections.namedtuple('BaseColor', ['red', 'green', 'blue'])):
     @property
     def rgb(self): return (self.red, self.green, self.blue)
 
+    @property
+    def norm_rgb(self): return (self.red*1.0/255, self.green*1.0/255, self.blue*1.0/255)
+
 
 class HeightColorMap(object):
 
