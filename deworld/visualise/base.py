@@ -64,10 +64,10 @@ class MapDrawer(QtGui.QWidget):
             y += self.cell_size[1]
             x = 0
 
+        qp.setBrush(QtGui.QColor(0, 0, 0))
         for power_point in self.world.power_points.values():
             if power_point.layer_type == LAYER_TYPE.HEIGHT:
                 x, y = self.get_draw_coords(power_point.x, power_point.y, 'center')
-                qp.setBrush(QtGui.QColor(0, 0, 0))
                 qp.drawEllipse(QtCore.QPointF(x, y), self.cell_size[0]/3, self.cell_size[1]/3)
 
     def paintEvent(self, e):
