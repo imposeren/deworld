@@ -49,15 +49,16 @@ class PlotCanvas(FigureCanvas):
 
         # plot random 3D data
         self.axes = self.figure.add_subplot(111, projection='3d')
-        self.axes.set_zlim(-1, 1)
         self.rerender()
         self.axes.autoscale(False)
 
     def rerender(self):
+        self.axes.clear()
+        self.axes.set_zlim(-1, 1)
         self.axes.plot_trisurf(*self.get_data(), cmap=red_cyan_transp, linewidth=0.1)
-        x = [random.random()*25 for i in range(100)]
-        y = [random.random()*25 for i in range(100)]
-        z = [random.random() for i in range(100)]
+        x = [random.random()*25 for i in range(25)]
+        y = [random.random()*25 for i in range(25)]
+        z = [random.random() for i in range(25)]
         self.axes.scatter(x, y, z)
         self.draw()
 
