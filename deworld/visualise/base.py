@@ -25,6 +25,7 @@ from deworld.map_colors import HeightColorMap
 from deworld import power_points
 from deworld import normalizers
 from deworld.layers import LAYER_TYPE
+from deworld.visualise.cmaps import red_cyan_transp
 
 
 class Communicate(QtCore.QObject):
@@ -53,7 +54,11 @@ class PlotCanvas(FigureCanvas):
         self.axes.autoscale(False)
 
     def rerender(self):
-        self.axes.plot_trisurf(*self.get_data(), cmap=cm.jet)
+        self.axes.plot_trisurf(*self.get_data(), cmap=red_cyan_transp, linewidth=0.1)
+        x = [random.random()*25 for i in range(100)]
+        y = [random.random()*25 for i in range(100)]
+        z = [random.random() for i in range(100)]
+        self.axes.scatter(x, y, z)
         self.draw()
 
     def get_data(self):
