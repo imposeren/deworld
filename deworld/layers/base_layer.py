@@ -67,7 +67,6 @@ class BaseLayer(object):
 
             for j, power in enumerate(row):
                 if x+j < 0 or self.w <= x+j : continue
-
                 self.add_power(x+j, y+i, power)
 
     def reset_powers(self):

@@ -1,13 +1,18 @@
 # coding: utf-8
 import random
 import collections
+import logging
 
 from deworld import layers
 from deworld.exceptions import DeworldException
 
+logger = logging.getLogger(__name__)
+
+
 def _randomize_value(value_min, value_max, value, fraction):
     delta = random.uniform(-fraction, fraction) * (value_max - value_min)
     return max(value_min, min(value_max, value+delta))
+
 
 class CellInfo(collections.namedtuple('CellInfoBase', ['height', 'temperature', 'wind', 'wetness', 'vegetation', 'soil', 'atmo_wind', 'atmo_temperature', 'atmo_wetness'])):
 
@@ -15,23 +20,27 @@ class CellInfo(collections.namedtuple('CellInfoBase', ['height', 'temperature', 
         state = random.getstate()
         random.seed(seed)
 
-        new_cell = CellInfo(height=_randomize_value(-1.0, 1.0, self.height, fraction),
-                            temperature=_randomize_value(0.0, 1.0, self.temperature, fraction),
-                            wind=(_randomize_value(-1.0, 1.0, self.wind[0], fraction), _randomize_value(-1.0, 1.0, self.wind[1], fraction)),
-                            wetness=_randomize_value(0.0, 1.0, self.wetness, fraction),
-                            vegetation=self.vegetation,
-                            soil=_randomize_value(0.0, 1.0, self.soil, fraction),
-                            atmo_wind=(_randomize_value(-1.0, 1.0, self.atmo_wind[0], fraction), _randomize_value(-1.0, 1.0, self.atmo_wind[1], fraction)),
-                            atmo_temperature=_randomize_value(0.0, 1.0, self.atmo_temperature, fraction),
-                            atmo_wetness=_randomize_value(0.0, 1.0, self.atmo_wetness, fraction))
+        new_cell = CellInfo(
+            height=_randomize_value(-1.0, 1.0, self.height, fraction),
+            temperature=_randomize_value(0.0, 1.0, self.temperature, fraction),
+            wind=(_randomize_value(-1.0, 1.0, self.wind[0], fraction), _randomize_value(-1.0, 1.0, self.wind[1], fraction)),
+            wetness=_randomize_value(0.0, 1.0, self.wetness, fraction),
+            vegetation=self.vegetation,
+            soil=_randomize_value(0.0, 1.0, self.soil, fraction),
+            atmo_wind=(_randomize_value(-1.0, 1.0, self.atmo_wind[0], fraction), _randomize_value(-1.0, 1.0, self.atmo_wind[1], fraction)),
+            atmo_temperature=_randomize_value(0.0, 1.0, self.atmo_temperature, fraction),
+            atmo_wetness=_randomize_value(0.0, 1.0, self.atmo_wetness, fraction)
+        )
         random.setstate(state)
         return new_cell
 
     @property
-    def mid_temperature(self): return (self.temperature + self.atmo_temperature) / 2.0
+    def mid_temperature(self):
+        return (self.temperature + self.atmo_temperature) / 2.0
 
     @property
-    def mid_wetness(self): return (self.wetness + self.atmo_wetness) / 2.0
+    def mid_wetness(self):
+        return (self.wetness + self.atmo_wetness) / 2.0
 
 
 class CellPowerInfo(collections.namedtuple('CellPowerInfoBase', ['height', 'temperature', 'wind', 'wetness', 'vegetation', 'soil'])):
@@ -78,23 +87,27 @@ class World(object):
         self.biomes.append(biom)
 
     def cell_info(self, x, y):
-        return CellInfo(height=self.layer_height.data[y][x],
-                        temperature=self.layer_temperature.data[y][x],
-                        wind=self.layer_wind.data[y][x],
-                        wetness=self.layer_wetness.data[y][x],
-                        vegetation=self.layer_vegetation.data[y][x],
-                        soil=self.layer_soil.data[y][x],
-                        atmo_wind=self.layer_atmosphere.data[y][x].wind,
-                        atmo_temperature=self.layer_atmosphere.data[y][x].temperature,
-                        atmo_wetness=self.layer_atmosphere.data[y][x].wetness)
+        return CellInfo(
+            height=self.layer_height.data[y][x],
+            temperature=self.layer_temperature.data[y][x],
+            wind=self.layer_wind.data[y][x],
+            wetness=self.layer_wetness.data[y][x],
+            vegetation=self.layer_vegetation.data[y][x],
+            soil=self.layer_soil.data[y][x],
+            atmo_wind=self.layer_atmosphere.data[y][x].wind,
+            atmo_temperature=self.layer_atmosphere.data[y][x].temperature,
+            atmo_wetness=self.layer_atmosphere.data[y][x].wetness
+        )
 
     def cell_power_info(self, x, y):
-        return CellPowerInfo(height=self.layer_height.power[y][x],
-                             temperature=self.layer_temperature.power[y][x],
-                             wind=self.layer_wind.power[y][x],
-                             wetness=self.layer_wetness.power[y][x],
-                             vegetation=self.layer_vegetation.power[y][x],
-                             soil=self.layer_soil.power[y][x] )
+        return CellPowerInfo(
+            height=self.layer_height.power[y][x],
+            temperature=self.layer_temperature.power[y][x],
+            wind=self.layer_wind.power[y][x],
+            wetness=self.layer_wetness.power[y][x],
+            vegetation=self.layer_vegetation.power[y][x],
+            soil=self.layer_soil.power[y][x]
+        )
 
     def _select_biom(self, x, y):
         # for biom in self.biomes:
@@ -105,7 +118,7 @@ class World(object):
         best_biom = None
 
         for biom in self.biomes:
-            points =  biom.check(self.cell_info(x, y))
+            points = biom.check(self.cell_info(x, y))
             if best_biom is None or best_points < points:
                 best_points = points
                 best_biom = biom
@@ -125,7 +138,6 @@ class World(object):
                 row.append(self._select_biom(x, y))
 
         return biom_map
-
 
     def resize(self, new_w, new_h):
         if self.w == new_w and self.h == new_h:
@@ -147,9 +159,8 @@ class World(object):
 
         return dx, dy
 
-
     def do_step(self):
-
+        logger.debug('Wordl.do_step() - start')
         self.layer_height.reset_powers()
         self.layer_temperature.reset_powers()
         self.layer_wind.reset_powers()
@@ -158,8 +169,8 @@ class World(object):
         self.layer_soil.reset_powers()
         self.layer_atmosphere.reset_powers()
 
-
         for power_point in self.power_points.values():
+            logger.debug('Wordl.do_step() - applying power point {0}'.format(power_point))
             power_point.update_world(self)
 
         self.layer_height.sync()
@@ -177,7 +188,7 @@ class World(object):
         self.layer_vegetation.apply()
         self.layer_soil.apply()
         self.layer_atmosphere.apply()
-
+        logger.debug('Wordl.do_step() - end')
 
     def serialize(self):
         return {'w': self.w,
@@ -196,24 +207,28 @@ class World(object):
     @classmethod
     def deserialize(cls, config, data):
 
-        world = cls(w=data['w'], h=data['h'], config=config,
-                    layer_height=data['layers']['height'],
-                    layer_temperature=data['layers']['temperature'],
-                    layer_wind=data['layers']['wind'],
-                    layer_atmosphere=data['layers']['atmosphere'],
-                    layer_wetness=data['layers']['wetness'],
-                    layer_vegetation=data['layers']['vegetation'],
-                    layer_soil=data['layers'].get('soil'))
+        world = cls(
+            w=data['w'], h=data['h'], config=config,
+            layer_height=data['layers']['height'],
+            layer_temperature=data['layers']['temperature'],
+            layer_wind=data['layers']['wind'],
+            layer_atmosphere=data['layers']['atmosphere'],
+            layer_wetness=data['layers']['wetness'],
+            layer_vegetation=data['layers']['vegetation'],
+            layer_soil=data['layers'].get('soil')
+        )
 
         return world
 
     def __eq__(self, other):
-        return (self.w == other.w and
-                self.h == other.h and
-                self.layer_height == other.layer_height and
-                self.layer_temperature == other.layer_temperature and
-                self.layer_wind == other.layer_wind and
-                self.layer_atmosphere == other.layer_atmosphere and
-                self.layer_wetness == other.layer_wetness and
-                self.layer_vegetation == other.layer_vegetation and
-                self.layer_soil == other.layer_soil)
+        return (
+            self.w == other.w and
+            self.h == other.h and
+            self.layer_height == other.layer_height and
+            self.layer_temperature == other.layer_temperature and
+            self.layer_wind == other.layer_wind and
+            self.layer_atmosphere == other.layer_atmosphere and
+            self.layer_wetness == other.layer_wetness and
+            self.layer_vegetation == other.layer_vegetation and
+            self.layer_soil == other.layer_soil
+        )
