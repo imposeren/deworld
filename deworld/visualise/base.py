@@ -29,7 +29,8 @@ class Visualiser(QtGui.QWidget):
 
         self.layer = 'height'
         self.colorizer = HeightColorMap.get_color
-        self.cmap = red_cyan_transp
+        self.cmap = {}
+        self.cmap['height'] = red_cyan_transp
         self.power_value = (0, 0.75)
         self.default_power = (0, 0)
         self.normalizer = normalizers.linear_2

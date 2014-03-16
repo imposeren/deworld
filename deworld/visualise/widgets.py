@@ -9,6 +9,7 @@ from PySide import QtGui, QtCore
 # matplotlib
 import matplotlib
 from matplotlib.figure import Figure
+from matplotlib import cm
 matplotlib.rcParams['backend.qt4'] = "PySide"
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -45,12 +46,19 @@ class PlotCanvas(FigureCanvas):
 
     def rerender(self):
         self.axes.clear()
-        self.axes.set_zlim(-1, 1)
-        self.axes.plot_trisurf(*self.get_data(), cmap=self.visualiser.cmap, linewidth=0.1)
+        self.axes.set_zlim(-1, 1.5)
+
+        # height:
+        self.axes.plot_trisurf(*self.get_data('layer_height'), cmap=self.visualiser.cmap['height'], linewidth=0.1)
+
+        # temperature:
+        temp_data = self.get_data('layer_temperature')
+        self.axes.bar3d(temp_data[0], temp_data[1], [1.3 for i in temp_data[0]], 0.2, 0.2, temp_data[2], linewidth=0.1)
         self.draw()
 
-    def get_data(self):
-        layer = getattr(self.world, 'layer_%s' % self.visualiser.layer)
+    def get_data(self, layer_name):
+        layer = getattr(self.world, layer_name)
+
         x_data = []
         y_data = []
         z_data = []
