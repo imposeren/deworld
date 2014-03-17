@@ -56,7 +56,7 @@ class PlotCanvas(FigureCanvas):
         # temperature:
         temp_data = self.get_data('layer_temperature')
         temp_colors = [temperature_colorizer(t).norm_rgb for t in temp_data[2]]
-        self.axes.bar3d(temp_data[0], temp_data[1], height_data[2], 0.1, 0.1, temp_data[2], color=temp_colors, linewidth=0.05)
+        self.axes.bar3d(temp_data[0], temp_data[1], height_data[2], 0.1, 0.1, temp_data[2], color=temp_colors, linewidth=0)
         self.draw()
 
     def get_data(self, layer_name):
