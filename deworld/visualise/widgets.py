@@ -18,6 +18,7 @@ from mpl_toolkits.mplot3d import Axes3D
 # deworld:
 from deworld.layers import LAYER_TYPE
 from deworld.cartographer import temperature_colorizer
+from deworld.visualise.utils import temperature_bar_size_box
 
 
 class Communicate(QtCore.QObject):
@@ -45,18 +46,42 @@ class PlotCanvas(FigureCanvas):
         self.axes = self.figure.add_subplot(111, projection='3d')
         self.rerender()
 
+    def render_surface(self, layer_name, colormap, **kwargs):
+        data = self.get_data(layer_name)
+        self.axes.plot_trisurf(*data, cmap=colormap, **kwargs)
+
+    def render_bars(self, layer_name, colorizer, flat=False, bar_size=0.1):
+        data = self.get_data('layer_temperature')
+        temp_colors = [colorizer(t).norm_rgb for t in data[2]]
+        if not flat:
+            height_data = self.get_data('layer_height')
+        else:
+            height_data = [[], [], []]
+            height_data[2] = [0 for x in data[0]]
+
+        if callable(bar_size):
+            dx = bar_size(data[2], 'x')
+            dy = bar_size(data[2], 'y')
+            dz = bar_size(data[2], 'z')
+        else:
+            dx, dy = [bar_size] * 2
+            dz = data[2]
+        self.axes.bar3d(
+            data[0], data[1], height_data[2],
+            dx, dy, dz,
+            color=temp_colors, linewidth=0
+        )
+
     def rerender(self):
         self.axes.clear()
         self.axes.set_zlim(-1, 1.5)
 
         # height:
-        height_data = self.get_data('layer_height')
-        self.axes.plot_trisurf(*height_data, cmap=self.visualiser.cmap['height'], linewidth=0.1)
+        self.render_surface('layer_height', self.visualiser.cmap['height'], linewidth=0.1)
 
         # temperature:
-        temp_data = self.get_data('layer_temperature')
-        temp_colors = [temperature_colorizer(t).norm_rgb for t in temp_data[2]]
-        self.axes.bar3d(temp_data[0], temp_data[1], height_data[2], 0.1, 0.1, temp_data[2], color=temp_colors, linewidth=0)
+        self.render_bars('layer_temperature', temperature_colorizer, bar_size=temperature_bar_size_box)
+
         self.draw()
 
     def get_data(self, layer_name):
